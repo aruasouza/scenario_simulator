@@ -68,7 +68,6 @@ def load_data(simulacao):
     # Total
     cenarios['impacto_total'] = cenarios['impacto_cdi_total'] + cenarios['impacto_ipca_total'] + cenarios['impacto_cambio_total']
 
-    cenarios.to_csv('cenarios.csv',index = False,sep = ';',encoding = 'ANSI',decimal = ',')
     return cenarios
 
 def change_data():
