@@ -117,27 +117,35 @@ if verificado:
         ipca_fig.update_layout(title = 'Simulação inflação (IPCA) %',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 200)
         ipca_fig.update_xaxes(title = '')
         ipca_fig.update_yaxes(title = '')
-        st.plotly_chart(ipca_fig,use_container_width = True)
+        ipca_fig.layout.xaxis.fixedrange = True
+        ipca_fig.layout.yaxis.fixedrange = True
+        st.plotly_chart(ipca_fig,use_container_width = True,config = {'displaylogo':False})
 
     with middle_column:
         cdi_fig = px.histogram(df,x = 'cdi')
         cdi_fig.update_layout(title = 'Simulação CDI %',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 200)
         cdi_fig.update_xaxes(title = '')
         cdi_fig.update_yaxes(title = '')
-        st.plotly_chart(cdi_fig,use_container_width = True)
+        cdi_fig.layout.xaxis.fixedrange = True
+        cdi_fig.layout.yaxis.fixedrange = True
+        st.plotly_chart(cdi_fig,use_container_width = True,config = {'displaylogo':False})
 
     with right_column:
         cambio_fig = px.histogram(df,x = 'cambio')
         cambio_fig.update_layout(title = 'Simulação variação câmbio %',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 200)
         cambio_fig.update_xaxes(title = '')
         cambio_fig.update_yaxes(title = '')
-        st.plotly_chart(cambio_fig,use_container_width = True)
+        cambio_fig.layout.xaxis.fixedrange = True
+        cambio_fig.layout.yaxis.fixedrange = True
+        st.plotly_chart(cambio_fig,use_container_width = True,config = {'displaylogo':False})
 
     fig = px.histogram(df,x = 'impacto_total')
     fig.update_layout(title = 'Simulação de Impacto Financeiro',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 350)
     fig.update_xaxes(title = '')
     fig.update_yaxes(title = '')
-    st.plotly_chart(fig,use_container_width = True)
+    fig.layout.xaxis.fixedrange = True
+    fig.layout.yaxis.fixedrange = True
+    st.plotly_chart(fig,use_container_width = True,config = {'displaylogo':False})
     st.download_button('Baixar Cenários',df.to_csv(index = False),'cenarios.csv')
 
 
@@ -148,6 +156,7 @@ footer {visibility:hidden;}
 header {visibility:hidden;}
 .block-container {padding-top:1rem;}
 .e1fqkh3o4 {padding-top:1rem;}
+.modebar {display: none !important;}
 </style>
 '''
 
