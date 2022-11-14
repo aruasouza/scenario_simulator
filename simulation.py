@@ -6,14 +6,23 @@ import plotly.express as px
 sim = pd.read_csv('simulacao.csv',index_col = 'situacao')
 
 st.set_page_config(page_title = 'Simulacão de cenários',page_icon = ':bar_chart:',layout = 'wide')
+style = '''
+<style>
+#MainMenu {visibility:hidden;}
+footer {visibility:hidden;}
+header {visibility:hidden;}
+.block-container {padding-top:1rem;}
+.e1fqkh3o4 {padding-top:1rem;}
+.modebar {display: none !important;}
+</style>
+'''
+
+st.markdown(style,unsafe_allow_html=True)
 
 def distribution(media,minimo,maximo,n):
-    step = (maximo - minimo) / n
-    dist = np.arange(minimo,maximo,step)
-    while len(dist) < n:
-        dist = np.append(dist,media)
-    while len(dist) > n:
-        dist = dist[1:]
+    size = maximo - minimo
+    size += size * 0.1
+    dist = (np.random.rand(n) * size) + minimo
     return list(map(lambda x: x + (np.random.normal(0.5,0.17) * (media - x)),dist))
 
 def gerar_cenarios(n,simulacao):
@@ -35,6 +44,7 @@ def check(simulacao):
         if (simulacao.loc['min',column] < simulacao.loc['medio',column] < simulacao.loc['max',column]):
             continue
         else:
+            form()
             mensagem_erro = '''
             ERRO: 
             O valor mínimo deve ser menor que o valor médio e o valor médio deve ser menor que o valor máximo.'''
@@ -48,7 +58,7 @@ def load_data(simulacao):
     passivos = pd.read_csv('passivos.csv')
     simulacao.to_csv('simulacao.csv',index_label = 'situacao')
 
-    cenarios = gerar_cenarios(1000,simulacao)
+    cenarios = gerar_cenarios(1000000,simulacao)
 
     # CDI
     cenarios['impacto_cdi_ativos'] = cenarios['cdi'] * ativos.loc[0,'cdi']
@@ -72,93 +82,116 @@ def load_data(simulacao):
 
 def change_data():
     st.session_state['data'] = simulacao
+    st.session_state['mode'] = 'visualize'
 
-st.header('Simulação de Cenários')
-st.sidebar.title('Criar simulação')
+def form():
+    st.session_state['mode'] = 'simulate'
 
-st.sidebar.header('Inflação (IPCA) %')
+@st.cache
+def compute_file(df):
+    return df.to_csv(index = False)
 
-left_bar_ipca,middle_bar_ipca,righ_bar_ipca = st.sidebar.columns(3)
-min_ipca = left_bar_ipca.number_input('Mínimo',key = 'min_ipca',value = sim.loc['min','ipca'] * 100) / 100
-med_ipca = middle_bar_ipca.number_input('Médio',key = 'med_ipca',value = sim.loc['medio','ipca'] * 100) / 100
-max_ipca = righ_bar_ipca.number_input('Máximo',key = 'max_ipca',value = sim.loc['max','ipca'] * 100) / 100
-
-st.sidebar.header('CDI %')
-left_bar_cdi,middle_bar_dci,righ_bar_cdi = st.sidebar.columns(3)
-min_cdi = left_bar_cdi.number_input('Mínimo',key = 'min_cdi',value = sim.loc['min','cdi'] * 100) / 100
-med_cdi = middle_bar_dci.number_input('Médio',key = 'med_cdi',value = sim.loc['medio','cdi'] * 100) / 100
-max_cdi = righ_bar_cdi.number_input('Máximo',key = 'max_cdi',value = sim.loc['max','cdi'] * 100) / 100
-
-st.sidebar.header('Variação no Câmbio %')
-left_bar_cambio,middle_bar_cambio,righ_bar_cambio = st.sidebar.columns(3)
-min_cambio = left_bar_cambio.number_input('Mínimo',key = 'min_cambio',value = sim.loc['min','cambio'] * 100) / 100
-med_cambio = middle_bar_cambio.number_input('Médio',key = 'med_cambio',value = sim.loc['medio','cambio'] * 100) / 100
-max_cambio = righ_bar_cambio.number_input('Máximo',key = 'max_cambio',value = sim.loc['max','cambio'] * 100) / 100
-
-dados = {'cambio':[min_cambio,med_cambio,max_cambio],'ipca':[min_ipca,med_ipca,max_ipca],'cdi':[min_cdi,med_cdi,max_cdi]}
-simulacao = pd.DataFrame(dados,index = ['min','medio','max'])
-
-button = st.sidebar.button('Simular',on_click = change_data)
-
-verificado = False
-if 'data' in st.session_state:
-    if check(st.session_state.data):
-        verificado = True
-        df = load_data(st.session_state.data)
-else:
-    if check(sim):
-        verificado = True
-        df = load_data(sim)
-
-if verificado:
-    left_column,middle_column,right_column = st.columns(3)
-    with left_column:
-        ipca_fig = px.histogram(df,x = 'ipca')
-        ipca_fig.update_layout(title = 'Simulação inflação (IPCA) %',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 200)
-        ipca_fig.update_xaxes(title = '')
-        ipca_fig.update_yaxes(title = '')
-        ipca_fig.layout.xaxis.fixedrange = True
-        ipca_fig.layout.yaxis.fixedrange = True
-        st.plotly_chart(ipca_fig,use_container_width = True,config = {'displaylogo':False})
-
-    with middle_column:
-        cdi_fig = px.histogram(df,x = 'cdi')
-        cdi_fig.update_layout(title = 'Simulação CDI %',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 200)
-        cdi_fig.update_xaxes(title = '')
-        cdi_fig.update_yaxes(title = '')
-        cdi_fig.layout.xaxis.fixedrange = True
-        cdi_fig.layout.yaxis.fixedrange = True
-        st.plotly_chart(cdi_fig,use_container_width = True,config = {'displaylogo':False})
-
-    with right_column:
-        cambio_fig = px.histogram(df,x = 'cambio')
-        cambio_fig.update_layout(title = 'Simulação variação câmbio %',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 200)
-        cambio_fig.update_xaxes(title = '')
-        cambio_fig.update_yaxes(title = '')
-        cambio_fig.layout.xaxis.fixedrange = True
-        cambio_fig.layout.yaxis.fixedrange = True
-        st.plotly_chart(cambio_fig,use_container_width = True,config = {'displaylogo':False})
-
-    fig = px.histogram(df,x = 'impacto_total')
-    fig.update_layout(title = 'Simulação de Impacto Financeiro',margin=dict(l = 0,r = 0,b = 0,t = 40),height = 350)
+@st.cache
+def generate_figure(df,axis,height,title):
+    fig = px.histogram(df,x = axis)
+    fig.update_layout(title = title,margin = dict(l = 0,r = 0,b = 0,t = 40),height = height)
     fig.update_xaxes(title = '')
     fig.update_yaxes(title = '')
     fig.layout.xaxis.fixedrange = True
     fig.layout.yaxis.fixedrange = True
-    st.plotly_chart(fig,use_container_width = True,config = {'displaylogo':False})
-    st.download_button('Baixar Cenários',df.to_csv(index = False),'cenarios.csv')
+    return fig
+
+if 'mode' not in st.session_state:
+    st.session_state['mode'] = 'simulate'
+
+st.header('Simulação de Cenários')
+st.sidebar.title('Criar simulação')
+
+if st.session_state['mode'] == 'simulate':
+
+    st.sidebar.header('Inflação (IPCA) %')
+
+    left_bar_ipca,middle_bar_ipca,righ_bar_ipca = st.sidebar.columns(3)
+    min_ipca = left_bar_ipca.number_input('Mínimo',key = 'min_ipca',value = sim.loc['min','ipca'] * 100) / 100
+    med_ipca = middle_bar_ipca.number_input('Médio',key = 'med_ipca',value = sim.loc['medio','ipca'] * 100) / 100
+    max_ipca = righ_bar_ipca.number_input('Máximo',key = 'max_ipca',value = sim.loc['max','ipca'] * 100) / 100
+
+    st.sidebar.header('CDI %')
+    left_bar_cdi,middle_bar_dci,righ_bar_cdi = st.sidebar.columns(3)
+    min_cdi = left_bar_cdi.number_input('Mínimo',key = 'min_cdi',value = sim.loc['min','cdi'] * 100) / 100
+    med_cdi = middle_bar_dci.number_input('Médio',key = 'med_cdi',value = sim.loc['medio','cdi'] * 100) / 100
+    max_cdi = righ_bar_cdi.number_input('Máximo',key = 'max_cdi',value = sim.loc['max','cdi'] * 100) / 100
+
+    st.sidebar.header('Variação no Câmbio %')
+    left_bar_cambio,middle_bar_cambio,righ_bar_cambio = st.sidebar.columns(3)
+    min_cambio = left_bar_cambio.number_input('Mínimo',key = 'min_cambio',value = sim.loc['min','cambio'] * 100) / 100
+    med_cambio = middle_bar_cambio.number_input('Médio',key = 'med_cambio',value = sim.loc['medio','cambio'] * 100) / 100
+    max_cambio = righ_bar_cambio.number_input('Máximo',key = 'max_cambio',value = sim.loc['max','cambio'] * 100) / 100
+
+    dados = {'cambio':[min_cambio,med_cambio,max_cambio],'ipca':[min_ipca,med_ipca,max_ipca],'cdi':[min_cdi,med_cdi,max_cdi]}
+    simulacao = pd.DataFrame(dados,index = ['min','medio','max'])
+
+    st.sidebar.button('Simular',on_click = change_data)
+
+    st.info('Clique em "Simular" para gerar uma nova simulação.')
+
+elif st.session_state['mode'] == 'visualize':
+
+    st.sidebar.button('Nova Simulação',on_click = form)
+    bar = st.progress(5)
+
+    verificado = False
+    if 'data' in st.session_state:
+        if check(st.session_state.data):
+            verificado = True
+            df = load_data(st.session_state.data)
+            bar.progress(30)
+    else:
+        st.session_state['data'] = sim
+        if check(st.session_state.data):
+            verificado = True
+            df = load_data(st.session_state.data)
+            bar.progress(30)
+
+    if verificado:
+        if 'historico' not in st.session_state:
+            st.session_state['historico'] = [st.session_state.data]
+        else:
+            st.session_state['historico'].append(st.session_state.data)
+
+        with st.sidebar:
+            st.header('Histórico:')
+            for i,hist in enumerate(st.session_state.historico):
+                texto = '''
+                IPCA: {} < {} < {} /
+                CDI: {} < {} < {} /
+                Câmbio: {} < {} < {}
+                '''.format(round(hist.loc['min','ipca'],2),round(hist.loc['medio','ipca'],2),round(hist.loc['max','ipca'],2),
+                round(hist.loc['min','cdi'],2),round(hist.loc['medio','cdi'],2),round(hist.loc['max','cdi'],2),
+                round(hist.loc['min','cambio'],2),round(hist.loc['medio','cambio'],2),round(hist.loc['max','cambio'],2))
+                st.markdown('<p style="font-size:80%;">' + texto + '</p>',unsafe_allow_html = True)
+
+        output_file = compute_file(df)
+        bar.progress(50)
+        left_column,middle_column,right_column = st.columns(3)
+        with left_column:
+            ipca_fig = generate_figure(df,'ipca',200,'Simulação inflação (IPCA) %')
+            st.plotly_chart(ipca_fig,use_container_width = True,config = {'displaylogo':False,'responsive': False})
+        bar.progress(60)
+        with middle_column:
+            cdi_fig = generate_figure(df,'cdi',200,'Simulação CDI %')
+            st.plotly_chart(cdi_fig,use_container_width = True,config = {'displaylogo':False,'responsive': False})
+        bar.progress(70)
+        with right_column:
+            cambio_fig = generate_figure(df,'cambio',200,'Simulação variação câmbio %')
+            st.plotly_chart(cambio_fig,use_container_width = True,config = {'displaylogo':False,'responsive': False})
+        bar.progress(80)
+        fig = generate_figure(df,'impacto_total',350,'Simulação de Impacto Financeiro')
+        st.plotly_chart(fig,use_container_width = True,config = {'displaylogo':False,'responsive': False})
+        st.download_button('Baixar Cenários',output_file,'cenarios.csv')
+        bar.progress(100)
+        bar.empty()
 
 
-style = '''
-<style>
-#MainMenu {visibility:hidden;}
-footer {visibility:hidden;}
-header {visibility:hidden;}
-.block-container {padding-top:1rem;}
-.e1fqkh3o4 {padding-top:1rem;}
-.modebar {display: none !important;}
-</style>
-'''
 
-st.markdown(style,unsafe_allow_html=True)
 
