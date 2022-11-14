@@ -58,7 +58,7 @@ def load_data(simulacao):
     passivos = pd.read_csv('passivos.csv')
     simulacao.to_csv('simulacao.csv',index_label = 'situacao')
 
-    cenarios = gerar_cenarios(1000000,simulacao)
+    cenarios = gerar_cenarios(100000,simulacao)
 
     # CDI
     cenarios['impacto_cdi_ativos'] = cenarios['cdi'] * ativos.loc[0,'cdi']
@@ -157,7 +157,7 @@ elif st.session_state['mode'] == 'visualize':
         if 'historico' not in st.session_state:
             st.session_state['historico'] = [st.session_state.data]
         else:
-            st.session_state['historico'].append(st.session_state.data)
+            st.session_state['historico'] = [st.session_state.data] + st.session_state['historico']
 
         with st.sidebar:
             st.header('Histórico:')
@@ -166,10 +166,10 @@ elif st.session_state['mode'] == 'visualize':
                 IPCA: {} < {} < {} /
                 CDI: {} < {} < {} /
                 Câmbio: {} < {} < {}
-                '''.format(round(hist.loc['min','ipca'],2),round(hist.loc['medio','ipca'],2),round(hist.loc['max','ipca'],2),
-                round(hist.loc['min','cdi'],2),round(hist.loc['medio','cdi'],2),round(hist.loc['max','cdi'],2),
-                round(hist.loc['min','cambio'],2),round(hist.loc['medio','cambio'],2),round(hist.loc['max','cambio'],2))
-                st.markdown('<p style="font-size:80%;">' + texto + '</p>',unsafe_allow_html = True)
+                '''.format(round(hist.loc['min','ipca'],4) * 100,round(hist.loc['medio','ipca'] * 100,2),round(hist.loc['max','ipca'] * 100,2),
+                round(hist.loc['min','cdi'] * 100,2),round(hist.loc['medio','cdi'] * 100,2),round(hist.loc['max','cdi'] * 100,2),
+                round(hist.loc['min','cambio'] * 100,2),round(hist.loc['medio','cambio'] * 100,2),round(hist.loc['max','cambio'] * 100,2))
+                st.markdown('<p style="font-size:70%;">' + texto + '</p>',unsafe_allow_html = True)
 
         output_file = compute_file(df)
         bar.progress(50)
