@@ -83,6 +83,7 @@ def load_data(simulacao):
 def change_data():
     st.session_state['data'] = simulacao
     st.session_state['mode'] = 'visualize'
+    st.sidebar.empty()
 
 def form():
     st.session_state['mode'] = 'simulate'
@@ -166,7 +167,7 @@ elif st.session_state['mode'] == 'visualize':
                 IPCA: {} < {} < {} /
                 CDI: {} < {} < {} /
                 Câmbio: {} < {} < {}
-                '''.format(round(hist.loc['min','ipca'],4) * 100,round(hist.loc['medio','ipca'] * 100,2),round(hist.loc['max','ipca'] * 100,2),
+                '''.format(round(hist.loc['min','ipca'] * 100,2),round(hist.loc['medio','ipca'] * 100,2),round(hist.loc['max','ipca'] * 100,2),
                 round(hist.loc['min','cdi'] * 100,2),round(hist.loc['medio','cdi'] * 100,2),round(hist.loc['max','cdi'] * 100,2),
                 round(hist.loc['min','cambio'] * 100,2),round(hist.loc['medio','cambio'] * 100,2),round(hist.loc['max','cambio'] * 100,2))
                 st.markdown('<p style="font-size:70%;">' + texto + '</p>',unsafe_allow_html = True)
@@ -191,7 +192,5 @@ elif st.session_state['mode'] == 'visualize':
         st.download_button('Baixar Cenários',output_file,'cenarios.csv')
         bar.progress(100)
         bar.empty()
-
-
 
 
